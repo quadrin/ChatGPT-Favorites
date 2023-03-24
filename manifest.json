@@ -1,7 +1,6 @@
 {
   "name": "ChatGPT-Favorites",
   "version": "1.0",
-  "icons": ["star.svg"],
   "description": "Adds ability to favorite chat logs and messages to ChatGPT",
   "manifest_version": 3,
   "permissions": ["activeTab"],
