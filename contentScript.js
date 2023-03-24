@@ -1,3 +1,13 @@
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to a 32-bit integer
+  }
+  return hash;
+}
+
 function createStarSvg() {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('stroke', 'currentColor');
@@ -38,10 +48,11 @@ function createStarButton(id, type) {
 function addStarButton() {
   // Add star button to chat titles
   const chatTitles = document.querySelectorAll('.flex.py-3.px-3.items-center.gap-3.relative');
-  chatTitles.forEach(function (chatTitle, index) {
+  chatTitles.forEach(function (chatTitle) {
+    const chatId = hashCode(chatTitle.textContent);
     if (!chatTitle.querySelector('.star-button')) {
       const svgIcon = chatTitle.querySelector('svg');
-      chatTitle.insertBefore(createStarButton(index, 'log'), svgIcon);
+      chatTitle.insertBefore(createStarButton(chatId, 'log'), svgIcon);
     }
   });
 }
