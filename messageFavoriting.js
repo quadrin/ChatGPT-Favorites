@@ -1,3 +1,13 @@
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to a 32-bit integer
+  }
+  return hash;
+}
+
 function waitForElement(selector, callback) {
   if (document.querySelector(selector)) {
     callback();
@@ -48,10 +58,13 @@ function addStarButton() {
   // Use the selector '.whitespace-pre-wrap' to target the message elements
   const messageElements = document.querySelectorAll('.whitespace-pre-wrap');
   messageElements.forEach(function (messageElement, index) {
+    // Generate a unique identifier based on the message content and index
+    const logId = `${hashCode(messageElement.textContent)}-${index}`;
+
     // Check if the message element already has a star button
     if (!messageElement.parentElement.querySelector('.star-button')) {
       // Insert the star button before the message element
-      messageElement.parentElement.insertBefore(createStarButton(index), messageElement);
+      messageElement.parentElement.insertBefore(createStarButton(logId), messageElement);
     }
   });
 }
@@ -62,6 +75,3 @@ waitForElement('.whitespace-pre-wrap', function () {
   const observer = new MutationObserver(addStarButton);
   observer.observe(document.body, { childList: true, subtree: true });
 });
-
-
-
