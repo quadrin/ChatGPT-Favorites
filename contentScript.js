@@ -1,65 +1,75 @@
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to a 32-bit integer
-  }
-  return hash;
-}
-
-function createStarSvg() {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('class', 'h-4 w-4');
-  svg.setAttribute('height', '1em');
-  svg.setAttribute('width', '1em');
-  svg.innerHTML = '<polygon points="12 1 15.09 8.26 23 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 1 9.27 8.91 8.26 12 1"></polygon>';
-  return svg;
-}
-
-function createStarButton(id, type) {
-  const button = document.createElement('button');
-  button.className = 'p-1 hover:text-white star-button';
-  button.style.fill = 'none';
-  button.appendChild(createStarSvg());
-  button.dataset.id = id;
-  button.dataset.type = type;
-
-  // Check if the item has been favorited and update the star color accordingly
-  if (localStorage.getItem(`favorited-${type}-${id}`) === 'true') {
-    button.querySelector('svg').classList.add('text-yellow-400');
+// Star buttons for chat titles in the sidebar.
+(function () {
+  // Older versions stored chat-title stars under either of these keys.
+  function isFavorited(id) {
+    return localStorage.getItem(`favorited-log-${id}`) === 'true' ||
+      localStorage.getItem(`log-favorited-${id}`) === 'true';
   }
 
-  button.addEventListener('click', function () {
-    const svg = this.querySelector('svg');
-    svg.classList.toggle('text-yellow-400');
-    // Store the favorited status in localStorage
-    localStorage.setItem(`favorited-${type}-${id}`, svg.classList.contains('text-yellow-400'));
-  });
-  return button;
-}
+  function setFavorited(id, value) {
+    localStorage.setItem(`favorited-log-${id}`, value);
+    localStorage.setItem(`log-favorited-${id}`, value);
+  }
 
-function addStarButton() {
-  // Add star button to chat titles
-  const chatTitles = document.querySelectorAll('.flex.py-3.px-3.items-center.gap-3.relative');
-  chatTitles.forEach(function (chatTitle) {
-    const chatId = hashCode(chatTitle.textContent);
-    if (!chatTitle.querySelector('.star-button')) {
-      const svgIcon = chatTitle.querySelector('svg');
-      chatTitle.insertBefore(createStarButton(chatId, 'log'), svgIcon);
+  function chatRecord(chatTitle, id) {
+    const link = chatTitle.closest('a') || chatTitle.querySelector('a');
+    const href = link ? link.getAttribute('href') || '' : '';
+    const match = href.match(/\/c\/([\w-]+)/);
+    return {
+      type: 'chat',
+      id: id,
+      title: chatTitle.textContent.trim(),
+      conversationId: match ? match[1] : null,
+      url: href ? new URL(href, location.origin).href : null,
+    };
+  }
+
+  function createStarButton(chatTitle, id) {
+    const button = document.createElement('button');
+    button.className = 'p-1 hover:text-white star-button';
+    button.style.fill = 'none';
+    button.appendChild(createStarSvg());
+    button.dataset.id = id;
+    button.dataset.type = 'log';
+
+    // Check if the chat has been favorited and update the star color accordingly
+    if (isFavorited(id)) {
+      button.querySelector('svg').classList.add('text-yellow-400');
+      // Favorites from before offline support have no saved copy yet
+      OfflineStore.saveIfMissing(chatRecord(chatTitle, id)).then(() => OfflineSync.schedule());
     }
-  });
-}
 
-// Wait for elements to load and then add star buttons
-const observer = new MutationObserver(addStarButton);
-observer.observe(document.body, { childList: true, subtree: true });
+    button.addEventListener('click', function () {
+      const svg = this.querySelector('svg');
+      svg.classList.toggle('text-yellow-400');
+      const favorited = svg.classList.contains('text-yellow-400');
+      // Store the favorited status in localStorage
+      setFavorited(id, favorited);
+      if (favorited) {
+        OfflineStore.save(chatRecord(chatTitle, id)).then(() => OfflineSync.schedule());
+      } else {
+        OfflineStore.remove('chat', id);
+      }
+    });
+    return button;
+  }
 
-// Initial run to add star buttons to existing elements
-addStarButton();
+  function addStarButton() {
+    // Add star button to chat titles
+    const chatTitles = document.querySelectorAll('.flex.py-3.px-3.items-center.gap-3.relative');
+    chatTitles.forEach(function (chatTitle) {
+      const chatId = hashCode(chatTitle.textContent);
+      if (!chatTitle.querySelector('.star-button')) {
+        const svgIcon = chatTitle.querySelector('svg');
+        chatTitle.insertBefore(createStarButton(chatTitle, chatId), svgIcon);
+      }
+    });
+  }
+
+  // Wait for elements to load and then add star buttons
+  const observer = new MutationObserver(addStarButton);
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Initial run to add star buttons to existing elements
+  addStarButton();
+})();
