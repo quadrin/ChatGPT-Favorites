@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChatGPT Favorites</title>
+  <link rel="stylesheet" href="offline.css">
+</head>
+<body>
+  <header>
+    <h1>Favorites</h1>
+    <span id="network" class="badge"></span>
+    <button id="open-tab" class="link" type="button">Open in tab</button>
+  </header>
+
+  <section id="sync">
+    <div id="sync-text">Favorited chats are saved here so you can read them without Wi-Fi.</div>
+    <progress id="sync-bar" value="0" max="1" hidden></progress>
+    <button id="sync-button" type="button">Download favorited chats now</button>
+  </section>
+
+  <input id="search" type="search" placeholder="Search saved favorites" autocomplete="off">
+
+  <section>
+    <h2>Chats <span id="chat-count" class="count"></span></h2>
+    <div id="chats"></div>
+  </section>
+
+  <section>
+    <h2>Messages <span id="message-count" class="count"></span></h2>
+    <div id="messages"></div>
+  </section>
+
+  <script src="offline.js"></script>
+</body>
+</html>
